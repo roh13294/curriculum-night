@@ -101,12 +101,49 @@ def generate_directions(path):
 
 # --- Streamlit App ---
 
-st.title("IA East / TCT Campus Navigator")
-
-st.image("floor plan.png", caption="Floor Plan Reference")
-
 graph = build_graph()
 destinations = get_destinations()
+
+start = st.selectbox("Where are you?", ["-- Select --"] + destinations)
+end = st.selectbox("Where do you need to go?", ["-- Select --"] + destinations)
+
+if start == "-- Select --" or end == "-- Select --":
+    st.info("Select a starting location and a destination to get directions.")
+else:
+    path = find_path(graph, start, end)
+
+    if path is None:
+        st.error("No path found between those locations.")
+    else:
+        st.subheader(f"{start}  →  {end}")
+        directions = generate_directions(path)
+        for line in directions:
+            st.write(line)
+
+st.markdown("---")
+
+st.title("IA East / TCT Campus Navigator")
+
+st.code("""\
+  FLOOR PLAN REFERENCE:
+  +-------------------------------------------------------+
+  |  [TCT Office] [25] [26]  [28]  [31] [33]  [34] [35]  |
+  +--+------+--------+---------+------+---------+---------+
+     | [21] |  [24] [27] [29] [30] [32]         | [Boiler]|
+     | [22] |                                   +---------+
+     +------+-+                               +-+---------+
+     |  [19]  |                               |  Gym      |
+     |  [20]  | [Media Ctr] [Courtyard] [Com] |           |
+     |  [16]  |                               +-----------+
+     +------+-+-------+------+------+------+--+-----------+
+  |  [17]  | [12] [10]  [8]  [6]  [4] [2]  | [Wt] |Kitchen|
+  |  [18]  |                                +------+-------+
+  +-+------+-------+------+------+------+------+  [Cafeteria]
+  |  [15] [13] [WkRm] [11]  [9]  [7]  [5] [3] |[Cns][1]    |
+  +--+---------+---+---+-----------+--------+--+---+--------+
+   North      Side                       Main     [Office]
+   Entrance   Entrance                  Entrance  [Stage]
+""", language=None)
 
 # Organize the catalog for display in an expander
 entrances = sorted([d for d in destinations if "Entrance" in d])
@@ -119,22 +156,3 @@ with st.expander("View All Destinations"):
     st.write("**Entrances:** " + ", ".join(entrances))
     st.write("**Rooms:** " + ", ".join(rooms))
     st.write("**Facilities:** " + ", ".join(facilities))
-
-st.markdown("---")
-
-start = st.selectbox("Where are you?", ["-- Select --"] + destinations)
-end = st.selectbox("Where do you need to go?", ["-- Select --"] + destinations)
-
-if start == "-- Select --" or end == "-- Select --":
-    st.info("Select a starting location and a destination to get directions.")
-    st.stop()
-
-path = find_path(graph, start, end)
-
-if path is None:
-    st.error("No path found between those locations.")
-else:
-    st.subheader(f"{start}  →  {end}")
-    directions = generate_directions(path)
-    for line in directions:
-        st.write(line)
