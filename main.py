@@ -124,35 +124,4 @@ st.markdown("---")
 
 st.title("IA East / TCT Campus Navigator")
 
-st.code("""\
-  FLOOR PLAN REFERENCE:
-  +-------------------------------------------------------+
-  |  [TCT Office] [25] [26]  [28]  [31] [33]  [34] [35]  |
-  +--+------+--------+---------+------+---------+---------+
-     | [21] |  [24] [27] [29] [30] [32]         | [Boiler]|
-     | [22] |                                   +---------+
-     +------+-+                               +-+---------+
-     |  [19]  |                               |  Gym      |
-     |  [20]  | [Media Ctr] [Courtyard] [Com] |           |
-     |  [16]  |                               +-----------+
-     +------+-+-------+------+------+------+--+-----------+
-  |  [17]  | [12] [10]  [8]  [6]  [4] [2]  | [Wt] |Kitchen|
-  |  [18]  |                                +------+-------+
-  +-+------+-------+------+------+------+------+  [Cafeteria]
-  |  [15] [13] [WkRm] [11]  [9]  [7]  [5] [3] |[Cns][1]    |
-  +--+---------+---+---+-----------+--------+--+---+--------+
-   North      Side                       Main     [Office]
-   Entrance   Entrance                  Entrance  [Stage]
-""", language=None)
-
-# Organize the catalog for display in an expander
-entrances = sorted([d for d in destinations if "Entrance" in d])
-rooms = sorted([d for d in destinations if d.startswith("Room ")],
-               key=lambda r: int(r.split()[1]))
-facilities = sorted([d for d in destinations
-                     if d not in entrances and d not in rooms])
-
-with st.expander("View All Destinations"):
-    st.write("**Entrances:** " + ", ".join(entrances))
-    st.write("**Rooms:** " + ", ".join(rooms))
-    st.write("**Facilities:** " + ", ".join(facilities))
+st.image("floor plan.png", caption="Floor Plan Reference")
