@@ -60,14 +60,33 @@ def generate_directions(path):
     checkpoint_shown = False
     passed = []
 
+    # Determine which nodes are rooms vs hallway junctions
+    def is_room(node):
+        return not node.startswith("_")
+
     lines.append(f"Start at: {path[0]}")
 
+    # Special case: only 2 or 3 nodes (very short path, usually across hall)
+    if len(path) <= 3 and is_room(path[0]) and is_room(path[-1]):
+        if len(path) == 2:
+            lines.append(f"{path[-1]} is right next to you")
+        else:
+            # 3 nodes: room -> hallway -> room (across the hall)
+            lines.append(f"Exit into the hallway — {path[-1]} is across the hall")
+        lines.append(f"Arrive at: {path[-1]}")
+        return lines
+
+    # For longer paths, generate step-by-step directions
+    # Skip the first segment (exiting starting room into hallway)
+    started = False
     for i in range(len(path)):
         node = path[i]
 
-        if not node.startswith("_") and 0 < i < len(path)-1:
+        # Track named rooms we pass (not start/end, not hallway nodes)
+        if is_room(node) and 0 < i < len(path)-1:
             passed.append(node)
 
+        # Show checkpoint at midpoint for long paths
         if i >= mid_idx and not checkpoint_shown and len(path) > 4:
             checkpoint_shown = True
             if passed:
@@ -80,7 +99,39 @@ def generate_directions(path):
             while diff > math.pi: diff -= 2*math.pi
             while diff < -math.pi: diff += 2*math.pi
 
-            if abs(diff) > 0.4:
+            is_turn = abs(diff) > 0.4
+
+            # First segment: exiting the starting room
+            if i == 0 and is_room(path[0]) and is_turn:
+                # Determine which direction to head after exiting
+                next_angle = angles[1] if len(angles) > 1 else angles[0]
+                deg = math.degrees(next_angle)
+                if -45 < deg < 45:
+                    heading = "head right"
+                elif 135 < deg or deg < -135:
+                    heading = "head left"
+                elif 45 <= deg <= 135:
+                    heading = "continue down the hall"
+                else:
+                    heading = "continue down the hall"
+                lines.append(f"Exit {path[0]} and {heading}")
+                started = True
+                continue
+
+            # Last segment: arriving at the destination room
+            if i == len(angles)-1 and is_room(path[-1]) and is_turn:
+                if passed:
+                    lines.append(f"Walk past {', '.join(passed)}")
+                    passed = []
+                if diff > 0:
+                    lines.append(f"{path[-1]} will be on your left")
+                else:
+                    lines.append(f"{path[-1]} will be on your right")
+                lines.append(f"Arrive at: {path[-1]}")
+                return lines
+
+            # Middle segments: hallway turns
+            if is_turn:
                 if passed:
                     lines.append(f"Walk past {', '.join(passed)}")
                     passed = []
@@ -88,15 +139,16 @@ def generate_directions(path):
                 turn = "Turn left" if diff > 0 else "Turn right"
                 near = nearest_room(NAV_NODES[path[i+1]])
                 if near and near not in (path[0], path[-1]):
-                    lines.append(f"{turn} (near {near})")
+                    lines.append(f"{turn} at the hallway (near {near})")
                 else:
-                    lines.append(f"{turn}")
+                    lines.append(f"{turn} at the hallway")
 
     if passed:
         lines.append(f"Walk past {', '.join(passed)}")
 
     lines.append(f"Arrive at: {path[-1]}")
     return lines
+
 
 
 # --- Streamlit App ---
