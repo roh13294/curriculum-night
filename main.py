@@ -101,6 +101,8 @@ def generate_directions(path):
 
 # --- Streamlit App ---
 
+st.title("IA East / TCT Campus Navigator")
+
 graph = build_graph()
 destinations = get_destinations()
 
@@ -121,7 +123,5 @@ else:
             st.write(line)
 
 st.markdown("---")
-
-st.title("IA East / TCT Campus Navigator")
 
 st.image("floor plan.png", caption="Floor Plan Reference")
