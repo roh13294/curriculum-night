@@ -1,7 +1,10 @@
+# some constants for the 3d stuff idk
 WALL_HEIGHT = 12
 PATH_Z = 2.5
 LABEL_Z = WALL_HEIGHT + 2
 
+# all the rooms on campus with their positions and colors
+# bounds = (x0, y0, x1, y1) basically the corners of each room
 ROOMS = {
     "Room 15":           {"bounds": (55,  40, 145, 155), "color": "#d4d4d8"},
     "Room 13":           {"bounds": (155, 40, 245, 155), "color": "#d4d4d8"},
@@ -61,6 +64,8 @@ ROOMS = {
     "Room 38":           {"bounds": (892,692, 972, 778), "color": "#d4d4d8"},
 }
 
+# coordinates for every place u can navigate to
+# rooms are actual rooms, the ones starting with _ are just hallway points
 NAV_NODES = {
     "North Entrance":    (38,  172),
     "Side Entrance":     (618, 28),
@@ -172,6 +177,8 @@ NAV_NODES = {
     "_VE3": (790, 628),
 }
 
+# all the connections between nodes - if two nodes are in a pair they're connected
+# basically this is the hallway layout
 NAV_EDGES = [
     ("_S01", "_S02"),
     ("_S02", "_S03"),
@@ -291,6 +298,6 @@ NAV_EDGES = [
     ("_N07", "_T01"),
 ]
 
-
+# returns a sorted list of all the real destinations (not the _ hallway nodes)
 def get_destinations():
     return sorted(n for n in NAV_NODES if not n.startswith("_"))

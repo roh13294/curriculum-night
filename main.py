@@ -1,3 +1,4 @@
+# bringing in the stuff we need lol
 import math
 import networkx as nx
 import streamlit as st
@@ -5,30 +6,40 @@ from campus_data import NAV_NODES, NAV_EDGES, ROOMS, get_destinations
 
 
 # --- Aditya: Start ---
+
+# this builds the whole map as a graph so we can find paths thru it
 def build_graph():
     G = nx.Graph()
+    # throw all the nodes (locations) onto the graph
     for name, pos in NAV_NODES.items():
         G.add_node(name, pos=pos)
+    # connect them with edges and calculate distance between each pair
     for a, b in NAV_EDGES:
         pa, pb = NAV_NODES[a], NAV_NODES[b]
         G.add_edge(a, b, weight=math.hypot(pa[0]-pb[0], pa[1]-pb[1]))
     return G
 
 
+# finds the shortest path between two spots using a* algorithm
 def find_path(graph, start, end):
+    # if ur already there then just return lol
     if start == end:
         return [start]
+    # heuristic function - basically guesses how far away the goal is
     def h(a, b):
         pa, pb = NAV_NODES[a], NAV_NODES[b]
         return math.hypot(pa[0]-pb[0], pa[1]-pb[1])
     try:
         return nx.astar_path(graph, start, end, heuristic=h, weight="weight")
     except nx.NetworkXNoPath:
+        # no way to get there rip
         return None
 
 
+# figures out what room is closest to a given position
 def nearest_room(pos):
     best, best_d = None, 999999
+    # loop thru every room and see which center is closest
     for name, info in ROOMS.items():
         x0, y0, x1, y1 = info["bounds"]
         cx, cy = (x0+x1)/2, (y0+y1)/2
@@ -39,6 +50,7 @@ def nearest_room(pos):
     return best
 
 
+# grabs a checkpoint near the middle of the path so u know ur on track
 def find_checkpoint(path):
     mid_pos = NAV_NODES[path[len(path)//2]]
     return nearest_room(mid_pos)
@@ -46,18 +58,23 @@ def find_checkpoint(path):
 
 
 # --- Charvith: Start ---
+
+# this is the big one - turns a path into actual directions u can follow
 def generate_directions(path):
     lines = []
 
+    # if the path is just one node u literally dont need to move
     if len(path) < 2:
         lines.append(f"You're already at {path[0]}!")
         return lines
 
+    # calculate the angle of each segment so we can figure out turns
     angles = []
     for i in range(len(path)-1):
         p1, p2 = NAV_NODES[path[i]], NAV_NODES[path[i+1]]
         angles.append(math.atan2(p2[1]-p1[1], p2[0]-p1[0]))
 
+    # set up checkpoint stuff and a list of rooms we walk past
     checkpoint = find_checkpoint(path)
     mid_idx = len(path) // 2
     checkpoint_shown = False
@@ -65,35 +82,33 @@ def generate_directions(path):
 # --- Charvith: End ---
 
 # --- Sahay: Start ---
-    # Determine which nodes are rooms vs hallway junctions
+    # checks if a node is an actual room or just a hallway junction
     def is_room(node):
         return not node.startswith("_")
 
     lines.append(f"Start at: {path[0]}")
 
-    # Special case: only 2 or 3 nodes (very short path, usually across hall)
+    # if its a super short path (like across the hall) just say that
     if len(path) <= 3 and is_room(path[0]) and is_room(path[-1]):
         if len(path) == 2:
             lines.append(f"{path[-1]} is right next to you")
         else:
-            # 3 nodes: room -> hallway -> room (across the hall)
             lines.append(f"Exit into the hallway — {path[-1]} is across the hall")
         lines.append(f"Arrive at: {path[-1]}")
         return lines
 
-    # For longer paths, generate step-by-step directions
-    # Skip the first segment (exiting starting room into hallway)
+    # ok for longer paths we gotta go step by step
     started = False
     for i in range(len(path)):
         node = path[i]
 # --- Sahay: End ---
 
 # --- Rohan: Start ---
-        # Track named rooms we pass (not start/end, not hallway nodes)
+        # keep track of rooms we pass by so we can mention them
         if is_room(node) and 0 < i < len(path)-1:
             passed.append(node)
 
-        # Show checkpoint at midpoint for long paths
+        # drop a checkpoint halfway thru so u dont get lost
         if i >= mid_idx and not checkpoint_shown and len(path) > 4:
             checkpoint_shown = True
             if passed:
@@ -102,15 +117,16 @@ def generate_directions(path):
             lines.append(f">> Checkpoint: you should see {checkpoint} nearby")
 
         if i < len(angles)-1:
+            # figure out if we need to turn by comparing angles
             diff = angles[i+1] - angles[i]
             while diff > math.pi: diff -= 2*math.pi
             while diff < -math.pi: diff += 2*math.pi
 
             is_turn = abs(diff) > 0.4
 
-            # First segment: exiting the starting room
+            # first step = leaving the room ur starting from
             if i == 0 and is_room(path[0]) and is_turn:
-                # Determine which direction to head after exiting
+                # figure out which way to go when u walk out
                 next_angle = angles[1] if len(angles) > 1 else angles[0]
                 deg = math.degrees(next_angle)
                 if -45 < deg < 45:
@@ -125,7 +141,7 @@ def generate_directions(path):
                 started = True
                 continue
 
-            # Last segment: arriving at the destination room
+            # last step = ur basically there, tell them which side its on
             if i == len(angles)-1 and is_room(path[-1]) and is_turn:
                 if passed:
                     lines.append(f"Walk past {', '.join(passed)}")
@@ -137,7 +153,7 @@ def generate_directions(path):
                 lines.append(f"Arrive at: {path[-1]}")
                 return lines
 
-            # Middle segments: hallway turns
+            # any other turn = a hallway turn, say whats nearby
             if is_turn:
                 if passed:
                     lines.append(f"Walk past {', '.join(passed)}")
@@ -150,6 +166,7 @@ def generate_directions(path):
                 else:
                     lines.append(f"{turn} at the hallway")
 
+    # if theres rooms left we havent mentioned yet
     if passed:
         lines.append(f"Walk past {', '.join(passed)}")
 
@@ -160,19 +177,23 @@ def generate_directions(path):
 
 
 # --- Sid: Start ---
-# --- Streamlit App ---
 
+# sets up the whole streamlit page
 st.title("IA East / TCT Campus Navigator")
 
+# build the graph and get all the places u can go
 graph = build_graph()
 destinations = get_destinations()
 
+# dropdown menus for picking start and end
 start = st.selectbox("Where are you?", ["-- Select --"] + destinations)
 end = st.selectbox("Where do you need to go?", ["-- Select --"] + destinations)
 
+# if they havent picked both yet just show a lil message
 if start == "-- Select --" or end == "-- Select --":
     st.info("Select a starting location and a destination to get directions.")
 else:
+    # find the path and show directions
     path = find_path(graph, start, end)
 
     if path is None:
@@ -180,10 +201,12 @@ else:
     else:
         st.subheader(f"{start}  →  {end}")
         directions = generate_directions(path)
+        # print each step one by one
         for line in directions:
             st.write(line)
 
 st.markdown("---")
 
+# show the floor plan pic at the bottom for reference
 st.image("floor plan.png", caption="Floor Plan Reference")
 # --- Sid: End ---
