@@ -1,4 +1,4 @@
-# some constants for the 3d stuff idk
+# some constants for the 3d stuff
 WALL_HEIGHT = 12
 PATH_Z = 2.5
 LABEL_Z = WALL_HEIGHT + 2
