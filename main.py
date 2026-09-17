@@ -22,7 +22,7 @@ def build_graph():
 
 # finds the shortest path between two spots using a* algorithm
 def find_path(graph, start, end):
-    # if ur already there then just return lol
+    # if ur already there then just return
     if start == end:
         return [start]
     # heuristic function - basically guesses how far away the goal is
@@ -32,7 +32,7 @@ def find_path(graph, start, end):
     try:
         return nx.astar_path(graph, start, end, heuristic=h, weight="weight")
     except nx.NetworkXNoPath:
-        # no way to get there rip
+        # no way to get there
         return None
 
 
@@ -59,7 +59,7 @@ def find_checkpoint(path):
 
 # --- Charvith: Start ---
 
-# this is the big one - turns a path into actual directions u can follow
+#turns a path into actual directions u can follow
 def generate_directions(path):
     lines = []
 
