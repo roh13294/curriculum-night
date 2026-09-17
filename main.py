@@ -4,6 +4,7 @@ import streamlit as st
 from campus_data import NAV_NODES, NAV_EDGES, ROOMS, get_destinations
 
 
+# --- Aditya: Start ---
 def build_graph():
     G = nx.Graph()
     for name, pos in NAV_NODES.items():
@@ -41,8 +42,10 @@ def nearest_room(pos):
 def find_checkpoint(path):
     mid_pos = NAV_NODES[path[len(path)//2]]
     return nearest_room(mid_pos)
+# --- Aditya: End ---
 
 
+# --- Charvith: Start ---
 def generate_directions(path):
     lines = []
 
@@ -59,7 +62,9 @@ def generate_directions(path):
     mid_idx = len(path) // 2
     checkpoint_shown = False
     passed = []
+# --- Charvith: End ---
 
+# --- Sahay: Start ---
     # Determine which nodes are rooms vs hallway junctions
     def is_room(node):
         return not node.startswith("_")
@@ -81,7 +86,9 @@ def generate_directions(path):
     started = False
     for i in range(len(path)):
         node = path[i]
+# --- Sahay: End ---
 
+# --- Rohan: Start ---
         # Track named rooms we pass (not start/end, not hallway nodes)
         if is_room(node) and 0 < i < len(path)-1:
             passed.append(node)
@@ -148,9 +155,11 @@ def generate_directions(path):
 
     lines.append(f"Arrive at: {path[-1]}")
     return lines
+# --- Rohan: End ---
 
 
 
+# --- Sid: Start ---
 # --- Streamlit App ---
 
 st.title("IA East / TCT Campus Navigator")
@@ -177,3 +186,4 @@ else:
 st.markdown("---")
 
 st.image("floor plan.png", caption="Floor Plan Reference")
+# --- Sid: End ---
